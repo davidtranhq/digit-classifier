@@ -19,6 +19,7 @@ class Network:
 	def train(self, training_data, epochs, mb_size, eta,
 		   lmbda = 0.0,
 		   eval_data = None,
+		   dynamic_learning_rate = False,
 		   monitor_eval_cost = False,
 		   monitor_eval_accuracy = False,
 		   monitor_training_cost = False,
@@ -39,6 +40,8 @@ class Network:
 			eval_len = len(eval_data)
 		n = len(training_data)
 		eval_cost, eval_accuracy = [], []
+		training_cost, training_accuracy = [], []
+		best_accuracy, eta_factor = 0, 1
 		for e in range(epochs):
 			random.shuffle(training_data)
 			mini_batches = [training_data[k:k+mb_size]
@@ -46,25 +49,39 @@ class Network:
 			for mb in mini_batches:
 				self.train_mini_batch(mb, eta, lmbda, n)
 			print("Finished epoch {}.".format(e))
+			# only calculate accuracy once if needed twice
+			if monitor_eval_accuracy or dynamic_learning_rate:
+				accuracy = self.accuracy(eval_data)
 			# print information if enabled
 			if monitor_training_cost:
-				cost = self.total_cost(training_data, lmbda)
-				training_cost.append(cost)
-				print("Training data cost: {}".format(cost))
+				c = self.total_cost(training_data, lmbda)
+				training_cost.append(c)
+				print("Training data cost: {}".format(c))
 			if monitor_training_accuracy:
 				accuracy = self.accuracy(training_data)
 				training_accuracy.append(accuracy)
 				print("Accuracy on training data: {} / {}".format(
                     accuracy, n))
 			if monitor_eval_cost:
-				cost = self.total_cost(eval_data, lmbda)
-				evaluation_cost.append(cost)
-				print("Cost on evaluation data: {}".format(cost))
+				c = self.total_cost(eval_data, lmbda)
+				eval_cost.append(c)
+				print("Cost on evaluation data: {}".format(c))
 			if monitor_eval_accuracy:
-				accuracy = self.accuracy(eval_data)
 				eval_accuracy.append(accuracy)
 				print("Accuracy on evaluation data: {} / {}".format(
-                    self.accuracy(eval_data), n))
+                    self.accuracy(eval_data), eval_len))
+			if dynamic_learning_rate:
+				if accuracy > best_accuracy:
+					best_accuracy = accuracy
+				else:
+					if eta_factor > 2048:
+						print("Learning rate has decreased by a factor of"
+						"{} with no improvement. Ending...".format(eta_factor))
+						break
+					eta /= 2
+					eta_factor *= 2
+
+
 
 		return (eval_cost, eval_accuracy, \
             training_cost, training_accuracy)
@@ -84,9 +101,9 @@ class Network:
 		# sum of gradients of every example in the mini batch
 		b_gradient = [np.zeros(b.shape) for b in self.biases]
 		w_gradient = [np.zeros(w.shape) for w in self.weights]
-		for x in mb:
+		for x, y in mb:
 			# backpropagate to find the gradient in this mini batch
-			db_gradient, dw_gradient = self.backprop(x[0], x[1])
+			db_gradient, dw_gradient = self.backprop(x, y)
 			# add this gradient to a running total
 			b_gradient = [nb+dnb for nb, dnb in zip(b_gradient, db_gradient)]
 			w_gradient = [nw+dnw for nw, dnw in zip(w_gradient, dw_gradient)]
@@ -142,7 +159,7 @@ class Network:
 	def feedforward(self, a):
 		"""Return output given input activations a"""
 		for b, w in zip(self.biases, self.weights):
-			a = sigmoid(np.dot(w, a)+b)
+			a = sigmoid(np.dot(w, a) + b)
 		return a
 
 	# functions for data monitoring
@@ -153,14 +170,14 @@ class Network:
 		"""
 		m = len(data)
 		c = 0.0
-		for x in data:
-			a = self.feedforward(x[0])
+		for x, y in data:
+			a = self.feedforward(x)
 			# divide by the # of examples because we're taking average
-			c += self.cost(a, x[1])/m
+			c += cost(a, y)/m
 		# L2 regularization
-		cost += 0.5*(lmbda/m)*sum(
+		c += 0.5*(lmbda/m)*sum(
 			np.linalg.norm(w)**2 for w in self.weights)
-		return cost
+		return c
 
 	def accuracy(self, data):
 		""" Returns the amount of digits that the network can correctly
@@ -178,7 +195,7 @@ def sigmoid(z):
 	return 1.0/(1.0+np.exp(-z))
 
 def sigmoid_prime(z):
-	return sigmoid(z)*(1-sigmoid(z))
+	return sigmoid(z)*(1.0-sigmoid(z))
 
 def dz_wrt_cost(a, y):
 	return (a-y)
@@ -190,6 +207,6 @@ def cost(a, y):
 if __name__ == "__main__":
 	import mnist_loader as ml
 	training_data, eval_data, test_data = ml.load_all()
-	net = Network([784, 30, 10])
-	net.train(training_data, 30, 10, 0.5, 5.0, eval_data, 
+	net = Network([784, 100, 10])
+	net.train(training_data, 60, 10, 0.1, 5.0, eval_data, 
 		   monitor_eval_accuracy=True)

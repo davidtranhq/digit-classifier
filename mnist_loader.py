@@ -27,7 +27,7 @@ def load(image_path, label_path):
 	# read data into tuple of imgs
 	imgs = tuple( np.fromstring(
 		img_bytes[i*img_size:(i+1)*img_size], 
-		dtype='B').reshape(img_size, 1) for i in range(num_imgs))
+		dtype='B').reshape(img_size, 1)/255 for i in range(num_imgs))
 	labels = tuple(
 		_vector_convert(label_bytes[i]) for i in range(num_labels))
 	return [(img, label) for img, label in zip(imgs, labels)]

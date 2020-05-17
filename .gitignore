@@ -2,3 +2,4 @@
 build/
 *.exe
 sdl2/
+__pycache__/

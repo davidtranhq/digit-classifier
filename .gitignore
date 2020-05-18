@@ -1,5 +1,3 @@
 .vs/
-build/
-*.exe
-sdl2/
-__pycache__/*
+releases/
+__pycache__/

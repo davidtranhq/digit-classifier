@@ -208,7 +208,7 @@ class Network:
 	def load(self, file):
 		"""Load neural network parameters stored in a JSON file"""
 		data = json.load(file)
-		self.__init__(data["sizes"], multithreaded=True)
+		self.__init__(data["sizes"])
 		self.weights = [np.array(w) for w in data["weights"]]
 		self.biases = [np.array(b) for b in data["biases"]]
 

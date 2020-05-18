@@ -91,7 +91,7 @@ class Application(tk.Frame):
 		"""
 		# network frame
 		net_frame = tk.LabelFrame(self, text="Neural Network")
-		train_btn = tk.Button(net_frame, text="Train", command=self.train)
+		self.train_btn = tk.Button(net_frame, text="Train", command=self.train)
 		save_btn = tk.Button(net_frame, text="Save", command=self.save)
 		load_btn = tk.Button(net_frame, text="Load", command=self.load)
 		test_btn = tk.Button(net_frame, text="Test", command=self.test)
@@ -103,7 +103,7 @@ class Application(tk.Frame):
 							justify=tk.LEFT)
 
 		# labels for accuracies
-		train_btn.grid(row=0, column=0, padx=5, pady=5, sticky="ew")
+		self.train_btn.grid(row=0, column=0, padx=5, pady=5, sticky="ew")
 		test_btn.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
 		load_btn.grid(row=0, column=2, padx=5, pady=5, sticky="ew")
 		save_btn.grid(row=0, column=3, padx=5, pady=5, sticky="ew")
@@ -200,8 +200,9 @@ class Application(tk.Frame):
 
 
 if __name__ == "__main__":
-	root = tk.Tk("Digit Recognizer")
+	root = tk.Tk()
 	root.resizable(False, False)
+	root.title("Digit Recognizer")
 	app = Application(master=root)
 	# override close to make sure neural network thread terminates
 	root.protocol("WM_DELETE_WINDOW", app.quit)

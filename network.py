@@ -1,20 +1,32 @@
 import numpy as np
 import random
+import json
 
 class Network:
 	def __init__(self, layer_sizes):
-		"""Constructs a neural network from layer_sizes, a list containing
-		the number of neurons in each layer.
+		"""Initializes the network. 
+		
+		Weights are Gaussian distributed with a 
+		mean of 0 and a standard deviation of 1/sqrt(number of input neurons). 
+		Biases are Gaussian distributed with a mean of 0 and a 
+		standard deviation of 1.
 
-		Weights are Gaussian distributed with a mean of 0 and a
-		standard deviation of 1/sqrt(number of input neurons), biases have mean
-		0 and standard deviation 1"""
+		layer_sizes -- a list/tuple containing the number of neurons 
+				       in each layer
 
+		"""
 		self.layers = len(layer_sizes)
 		self.sizes = layer_sizes
 		self.biases = [np.random.randn(y, 1) for y in self.sizes[1:]]
 		self.weights = [np.random.randn(y, x)/np.sqrt(x)
 				  for x,y in zip(self.sizes[:-1], self.sizes[1:])]
+		self.quit = False
+
+	def kill(self):
+		"""Stops the network training in-between mini batches from another
+		thread.
+		"""
+		self.quit = True
 
 	def train(self, training_data, epochs, mb_size, eta,
 		   lmbda = 0.0,
@@ -28,14 +40,25 @@ class Network:
 		Evaluation data is used to modify the hyper parameters and prevent
 		overfitting.
 
-		training_data = tuple containing all training examples
-		epochs = number of iterations to train for
-	    mb_size = mini batch size
-		eta = learning rate,
-		lmbda = regularization paramter
-		eval_data = tuple containing all evaluation examples
-		
+		training_data -- tuple containing all training examples
+		epochs -- number of iterations to train for
+	    mb_size -- mini batch size
+		eta -- learning rate,
+		lmbda -- regularization paramter
+		eval_data -- tuple containing all evaluation examples
+		dynamic_learning_rate -- specifies whether or not to lower the
+			learning rate based on evaluation accuracy
+		monitor_eval_cost -- print the total cost of the evaluation data after
+			each epoch
+		monitor_eval_accuracy -- print the accuracy on the evaluation data after
+			each epoch
+		monitor_training_cost -- print the total cost of the training data after
+			each epoch
+		monitor_training_accuracy -- print the accuracy on the training data after
+			each epoch
 		"""
+		print("Started training.")
+		self.quit = False
 		if eval_data:
 			eval_len = len(eval_data)
 		n = len(training_data)
@@ -47,11 +70,14 @@ class Network:
 			mini_batches = [training_data[k:k+mb_size]
 				   for k in range(0, n, mb_size)]
 			for mb in mini_batches:
+				# check if thread was asked to kill
+				if self.quit:
+					return
 				self.train_mini_batch(mb, eta, lmbda, n)
 			print("Finished epoch {}.".format(e))
 			# only calculate accuracy once if needed twice
 			if monitor_eval_accuracy or dynamic_learning_rate:
-				accuracy = self.accuracy(eval_data)
+				eval_accuracy = self.accuracy(eval_data)
 			# print information if enabled
 			if monitor_training_cost:
 				c = self.total_cost(training_data, lmbda)
@@ -67,12 +93,12 @@ class Network:
 				eval_cost.append(c)
 				print("Cost on evaluation data: {}".format(c))
 			if monitor_eval_accuracy:
-				eval_accuracy.append(accuracy)
+				eval_accuracy.append(eval_accuracy)
 				print("Accuracy on evaluation data: {} / {}".format(
                     self.accuracy(eval_data), eval_len))
 			if dynamic_learning_rate:
-				if accuracy > best_accuracy:
-					best_accuracy = accuracy
+				if eval_accuracy > best_accuracy:
+					best_accuracy = eval_accuracy
 				else:
 					if eta_factor > 2048:
 						print("Learning rate has decreased by a factor of"
@@ -161,6 +187,30 @@ class Network:
 		for b, w in zip(self.biases, self.weights):
 			a = sigmoid(np.dot(w, a) + b)
 		return a
+
+	def guess(self, a):
+		"""Returns a list containing the top 3 answers, where each answer
+		is a tuple (answer, activation)
+		"""
+		a = np.array(a).reshape(784, 1)
+		ans = self.feedforward(a)
+		return [(i[0], ans[i][0][0]) for i in (-ans).argsort(-2)[:3]]
+
+	def save(self, file):
+		"""Save the current parameters to a JSON file"""
+		data = {
+			"sizes": self.sizes,
+			"weights": [w.tolist() for w in self.weights],
+			"biases": [b.tolist() for b in self.biases],
+		}
+		json.dump(data, file)
+
+	def load(self, file):
+		"""Load neural network parameters stored in a JSON file"""
+		data = json.load(file)
+		self.__init__(data["sizes"], multithreaded=True)
+		self.weights = [np.array(w) for w in data["weights"]]
+		self.biases = [np.array(b) for b in data["biases"]]
 
 	# functions for data monitoring
 	def total_cost(self, data, lmbda):

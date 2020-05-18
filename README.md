@@ -4,6 +4,8 @@ A Python 3 implementation of a feed-forward neural network trained with backprop
 
 The training and testing examples are taken from the [MNSIT handwritten digit database](http://yann.lecun.com/exdb/mnist/).
 
+![](preview.gif)
+
 ## Getting Started
 
 ### Dependencies

@@ -77,7 +77,7 @@ class Network:
 			print("Finished epoch {}.".format(e))
 			# only calculate accuracy once if needed twice
 			if monitor_eval_accuracy or dynamic_learning_rate:
-				eval_accuracy = self.accuracy(eval_data)
+				accuracy = self.accuracy(eval_data)
 			# print information if enabled
 			if monitor_training_cost:
 				c = self.total_cost(training_data, lmbda)
@@ -93,12 +93,12 @@ class Network:
 				eval_cost.append(c)
 				print("Cost on evaluation data: {}".format(c))
 			if monitor_eval_accuracy:
-				eval_accuracy.append(eval_accuracy)
+				eval_accuracy.append(accuracy)
 				print("Accuracy on evaluation data: {} / {}".format(
                     self.accuracy(eval_data), eval_len))
 			if dynamic_learning_rate:
-				if eval_accuracy > best_accuracy:
-					best_accuracy = eval_accuracy
+				if accuracy > best_accuracy:
+					best_accuracy = accuracy
 				else:
 					if eta_factor > 2048:
 						print("Learning rate has decreased by a factor of"

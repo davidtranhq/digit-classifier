@@ -30,7 +30,12 @@ The executable was built using [PyInstaller](https://pypi.org/project/PyInstalle
 
 ## Usage
 
-To use a Python module:
+Example (using gui):
+```
+>>> python gui.py
+```
+
+To use as a Python module:
 
 Example (no gui):
 ```
@@ -49,10 +54,6 @@ or
 >>> python network.py
 ```
 
-Example (using gui):
-```
->>> python gui.py
-```
 
 A save and load feature is used to save and load previous network parameters in JSON file format. Included in the directory `SAVED_NETWORKS` is `98_accuracy_network.json` which contains network parameters that achieved 97.99% accuracy on the test data.
 

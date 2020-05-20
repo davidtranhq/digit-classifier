@@ -1,6 +1,6 @@
 # Digit Recognizer
 
-A Python 3 implementation of a feed-forward neural network trained with backpropagation and stochastic gradient descent to recognize handwritten digits. The algorithm is outlined in Michael Nielsen's book [Neural Networks and Deep Learning](http://neuralnetworksanddeeplearning.com/). Includes a GUI.
+A Python 3 implementation of a feed-forward MLP neural network trained with backpropagation and stochastic gradient descent to recognize handwritten digits. The algorithm is outlined in Michael Nielsen's book [Neural Networks and Deep Learning](http://neuralnetworksanddeeplearning.com/). Includes a GUI.
 
 The training and testing examples are taken from the [MNSIT handwritten digit database](http://yann.lecun.com/exdb/mnist/).
 
